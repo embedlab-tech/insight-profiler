@@ -1,55 +1,90 @@
-# Prerequisites
-*.d
+# =============================================================================
+# Insight Profiler — .gitignore
+# EmbedLab-Tech | macOS / ESP-IDF / Python / Node.js
+# =============================================================================
 
-# Object files
+# ── macOS ────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ── IDEs & Editors ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── ESP-IDF / CMake Build ────────────────────────────────────────────────────
+build/
+sdkconfig
+sdkconfig.old
+managed_components/
+dependencies.lock
+
+# ── C/C++ Objects & Binaries ─────────────────────────────────────────────────
 *.o
 *.ko
 *.obj
 *.elf
-
-# Linker output
 *.ilk
 *.map
 *.exp
-
-# Precompiled Headers
 *.gch
 *.pch
-
-# Libraries
 *.lib
 *.a
 *.la
 *.lo
-
-# Shared objects (inc. Windows DLLs)
 *.dll
 *.so
 *.so.*
 *.dylib
-
-# Executables
 *.exe
 *.out
 *.app
-*.i*86
-*.x86_64
 *.hex
-
-# Debug files
+*.bin
 *.dSYM/
 *.su
 *.idb
 *.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
-
-# debug information files
+*.d
 *.dwo
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+venv/
+.venv/
+.python-version
+*.whl
+
+# ── Node.js / TypeScript ────────────────────────────────────────────────────
+node_modules/
+sdk-js/dist/
+*.tsbuildinfo
+.npm
+.yarn/
+
+# ── Testing & Coverage ──────────────────────────────────────────────────────
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# ── Logs & Misc ─────────────────────────────────────────────────────────────
+*.log
+*.csv
+*.sqlite
+*.db

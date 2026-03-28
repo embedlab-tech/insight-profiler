@@ -1,0 +1,32 @@
+{
+  "name": "@embedlab-tech/insight-profiler",
+  "version": "0.1.0",
+  "description": "WebUSB SDK for the Insight Profiler power measurement tool by EmbedLab-Tech",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/"
+  },
+  "files": [
+    "dist/"
+  ],
+  "keywords": [
+    "webusb",
+    "power-profiler",
+    "embedded",
+    "iot",
+    "esp32"
+  ],
+  "author": "EmbedLab-Tech",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EmbedLab-Tech/insight-profiler"
+  },
+  "devDependencies": {
+    "typescript": "^5.4"
+  }
+}

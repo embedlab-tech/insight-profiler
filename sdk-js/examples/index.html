@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insight Profiler — WebUSB Demo</title>
+    <style>
+        :root { --accent: #0066cc; --bg: #0a0a0a; --surface: #1a1a1a; --text: #e0e0e0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'SF Mono', 'Fira Code', monospace; background: var(--bg); color: var(--text); padding: 2rem; }
+        h1 { color: var(--accent); font-size: 1.4rem; margin-bottom: 0.5rem; }
+        .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 2rem; }
+        button { background: var(--accent); color: white; border: none; padding: 0.7rem 1.6rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
+        button:hover { background: #0055aa; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .controls { display: flex; gap: 1rem; margin-bottom: 2rem; }
+        .status { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.8rem; background: var(--surface); }
+        .status.connected { color: #4caf50; }
+        .status.error { color: #f44336; }
+        .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .metric { background: var(--surface); padding: 1.2rem; border-radius: 8px; }
+        .metric .label { font-size: 0.75rem; color: #888; text-transform: uppercase; }
+        .metric .value { font-size: 1.8rem; color: var(--accent); margin-top: 0.3rem; }
+        .metric .unit { font-size: 0.85rem; color: #666; }
+        #log { background: var(--surface); padding: 1rem; border-radius: 8px; height: 300px; overflow-y: auto; font-size: 0.8rem; line-height: 1.6; }
+        #log .entry { border-bottom: 1px solid #222; padding: 0.2rem 0; }
+    </style>
+</head>
+<body>
+    <h1>Insight Profiler</h1>
+    <p class="subtitle">EmbedLab-Tech — WebUSB Power Monitor</p>
+
+    <div class="controls">
+        <button id="btn-connect">Connect Device</button>
+        <button id="btn-disconnect" disabled>Disconnect</button>
+        <span id="status" class="status">Disconnected</span>
+    </div>
+
+    <div class="metrics">
+        <div class="metric">
+            <div class="label">Voltage</div>
+            <div class="value" id="voltage">—</div>
+            <div class="unit">V</div>
+        </div>
+        <div class="metric">
+            <div class="label">Current</div>
+            <div class="value" id="current">—</div>
+            <div class="unit">mA</div>
+        </div>
+        <div class="metric">
+            <div class="label">Power</div>
+            <div class="value" id="power">—</div>
+            <div class="unit">mW</div>
+        </div>
+    </div>
+
+    <div id="log"></div>
+
+    <script type="module">
+        import { InsightWebUSBClient } from "../dist/index.js";
+
+        const client = new InsightWebUSBClient();
+        const btnConnect = document.getElementById("btn-connect");
+        const btnDisconnect = document.getElementById("btn-disconnect");
+        const statusEl = document.getElementById("status");
+        const voltageEl = document.getElementById("voltage");
+        const currentEl = document.getElementById("current");
+        const powerEl = document.getElementById("power");
+        const logEl = document.getElementById("log");
+
+        let sampleCount = 0;
+
+        client.onStateChange = (state) => {
+            statusEl.textContent = state.charAt(0).toUpperCase() + state.slice(1);
+            statusEl.className = `status ${state}`;
+            btnConnect.disabled = state === "connected" || state === "connecting";
+            btnDisconnect.disabled = state !== "connected";
+        };
+
+        client.onSample = (sample) => {
+            sampleCount++;
+            voltageEl.textContent = sample.busVoltageV.toFixed(3);
+            currentEl.textContent = sample.currentMa.toFixed(3);
+            powerEl.textContent = sample.powerMw.toFixed(3);
+
+            if (sampleCount % 10 === 0) {
+                const entry = document.createElement("div");
+                entry.className = "entry";
+                entry.textContent = `#${sampleCount} | ${sample.busVoltageV.toFixed(3)}V | ${sample.currentMa.toFixed(3)}mA | ${sample.powerMw.toFixed(3)}mW`;
+                logEl.prepend(entry);
+
+                while (logEl.children.length > 200) {
+                    logEl.removeChild(logEl.lastChild);
+                }
+            }
+        };
+
+        btnConnect.addEventListener("click", async () => {
+            try {
+                await client.requestDevice();
+                await client.connect();
+            } catch (err) {
+                console.error("Connection failed:", err);
+            }
+        });
+
+        btnDisconnect.addEventListener("click", async () => {
+            await client.disconnect();
+        });
+    </script>
+</body>
+</html>
