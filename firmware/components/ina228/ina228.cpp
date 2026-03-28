@@ -6,6 +6,7 @@
  */
 
 #include "ina228.h"
+#include "esp_check.h"
 #include "esp_log.h"
 
 static const char *TAG = "ina228";

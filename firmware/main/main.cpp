@@ -18,6 +18,7 @@
 #include <cstring>
 #include <cinttypes>
 
+#include "esp_check.h"
 #include "esp_log.h"
 #include "esp_chip_info.h"
 #include "esp_flash.h"
