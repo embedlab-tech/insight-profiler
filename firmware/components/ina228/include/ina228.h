@@ -53,8 +53,18 @@ public:
     esp_err_t reset();
 
 private:
+    // INA228 register addresses
+    static constexpr uint8_t REG_CONFIG     = 0x00;
+    static constexpr uint8_t REG_ADC_CONFIG = 0x01;
+    static constexpr uint8_t REG_SHUNT_CAL  = 0x02;
+    static constexpr uint8_t REG_VSHUNT     = 0x04;
+    static constexpr uint8_t REG_VBUS       = 0x05;
+    static constexpr uint8_t REG_CURRENT    = 0x07;
+    static constexpr uint8_t REG_POWER      = 0x08;
+
     esp_err_t write_register(uint8_t reg, uint16_t value);
     esp_err_t read_register(uint8_t reg, uint16_t &value);
+    esp_err_t read_register_24(uint8_t reg, uint32_t &value);
 
     Config config_;
     i2c_master_dev_handle_t dev_handle_ = nullptr;
