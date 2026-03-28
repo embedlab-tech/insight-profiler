@@ -1,26 +1,34 @@
 # insight-profiler
-High-precision Open Source Power Profiler & Energy Analyzer for IoT Development.
+High-precision Open Source Power Profiler & Programmable Power Supply for IoT Development.
 
-## Hardware Architecture
+→ [Full feature plan](docs/FEATURES.md) · [Hardware block diagram](hardware/block-diagram.md)
+
+## Planned Architecture
 
 ```mermaid
 graph TD
-    subgraph "Insight Profiler Hardware Architecture"
-        PD[USB-C Input] -->|VBUS| DUT[Device Under Test]
+    USBC[USB-C PD Input] --> PD[PD Negotiation\n5–20 V]
+    PD --> BUCK[Buck-Boost\n1.8–5.0 V programmable]
+    BUCK --> SW[Output Switch\nGPIO-controlled]
+    SW --> MEAS[Auto-Ranging Shunts\n3 nA – 3 A]
+    MEAS --> DUT[Device Under Test]
+    MEAS --> INA228[INA228\n20-bit Power Monitor]
+    INA228 -->|I2C| ESP[ESP32-S3]
+    ESP -->|USB CDC| SDK[Python SDK / CLI]
+    ESP -->|Wi-Fi| WEB[Web Dashboard / MCP]
+```
 
-        subgraph "Measurement Engine"
-            SHUNT[Shunt Resistor 10 mΩ]
-            INA228[INA228 20-bit Power Monitor]
-            SHUNT --> INA228
-        end
+See [hardware/block-diagram.md](hardware/block-diagram.md) for the full diagram with current ranges and signal flow.
 
-        DUT --- SHUNT
-        INA228 -->|I2C 400 kHz| ESP[ESP32-S3 Dual-Core]
+## Current Implementation (v0.1)
 
-        subgraph "Connectivity"
-            ESP -->|USB-C Native CDC| MAC[Mac/PC - Python SDK / WebUSB JS SDK]
-        end
-    end
+```mermaid
+graph TD
+    USBC[USB-C Input] -->|VBUS| DUT[Device Under Test]
+    DUT --> SHUNT[Shunt 10 mΩ]
+    SHUNT --> INA228[INA228 20-bit]
+    INA228 -->|I2C 400 kHz| ESP[ESP32-S3]
+    ESP -->|USB CDC| HOST[Python SDK / WebUSB JS SDK]
 ```
 
 ## Stack
@@ -28,8 +36,9 @@ graph TD
 | Layer | Technology |
 |---|---|
 | Firmware | ESP-IDF (C++), TinyUSB CDC |
-| Power sensor | TI INA228 — bus voltage, shunt voltage, current, power |
-| Host SDK | Python (`pyserial`), JS/WebUSB (TypeScript) |
+| Power sensor | TI INA228 — voltage, current, power |
+| Host SDK | Python (`pyserial`), TypeScript/WebUSB |
+| AI integration | MCP server (planned) |
 
 ## Data Stream
 
@@ -70,5 +79,6 @@ firmware/          ESP32-S3 firmware (ESP-IDF)
   main/            Application entry point
 sdk-python/        Python host SDK
 sdk-js/            TypeScript/WebUSB SDK
-hardware/          Schematics, PCB layout, BOM (in progress)
+hardware/          Block diagram, schematics, PCB layout, BOM
+docs/              Feature specs and design docs
 ```
