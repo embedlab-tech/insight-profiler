@@ -5,15 +5,22 @@ Python client library for the [Insight Profiler](https://github.com/EmbedLab-Tec
 ## Quick Start
 
 ```bash
-# Create a virtual environment (recommended on macOS with Homebrew Python)
-python3 -m venv .venv
-source .venv/bin/activate
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install in development mode
-pip install -e ".[dev,plot]"
+# Create venv + install in dev mode
+cd sdk-python
+uv sync --all-extras
 
 # Run tests
-pytest
+uv run pytest
+
+# Lint & format
+uv run ruff check .
+uv run ruff format .
+
+# Type check
+uv run mypy insight_profiler
 ```
 
 ## Usage
@@ -28,5 +35,5 @@ client.connect()
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.12+
 - macOS / Linux / Windows

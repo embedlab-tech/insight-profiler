@@ -1,14 +1,10 @@
-[build-system]
-requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "insight-profiler"
 version = "0.1.0"
 description = "Python SDK for the Insight Profiler — high-precision power measurement tool by EmbedLab-Tech"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 authors = [
     {name = "EmbedLab-Tech"},
 ]
@@ -18,8 +14,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
@@ -30,28 +24,104 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-    "pytest-cov",
-    "ruff",
-    "mypy",
-]
 plot = [
-    "matplotlib>=3.8",
-    "numpy>=1.26",
+    "matplotlib>=3.9",
+    "numpy>=2.0",
 ]
 
 [project.urls]
 Homepage = "https://github.com/EmbedLab-Tech/insight-profiler"
 Issues = "https://github.com/EmbedLab-Tech/insight-profiler/issues"
 
-[tool.setuptools.packages.find]
-where = ["."]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["insight_profiler"]
+
+# ── Ruff (linter + formatter — replaces black, isort, flake8, pylint, pyupgrade) ──
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py312"
 line-length = 100
 
+[tool.ruff.lint]
+select = [
+    "F",      # pyflakes
+    "E", "W", # pycodestyle
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade — auto-modernize syntax to latest Python
+    "ANN",    # flake8-annotations — enforce type hints
+    "ASYNC",  # flake8-async — async anti-patterns
+    "S",      # flake8-bandit — security checks
+    "B",      # flake8-bugbear — common bugs
+    "A",      # flake8-builtins — shadowing built-ins
+    "C4",     # flake8-comprehensions — better list/dict/set comps
+    "DTZ",    # flake8-datetimez — naive datetime usage
+    "T10",    # flake8-debugger — leftover debugger statements
+    "ISC",    # flake8-implicit-str-concat
+    "ICN",    # flake8-import-conventions
+    "PIE",    # flake8-pie — misc lints
+    "PT",     # flake8-pytest-style
+    "RSE",    # flake8-raise
+    "RET",    # flake8-return
+    "SLF",    # flake8-self — private member access
+    "SIM",    # flake8-simplify
+    "TID",    # flake8-tidy-imports
+    "TCH",    # flake8-type-checking — move imports to TYPE_CHECKING
+    "ARG",    # flake8-unused-arguments
+    "PTH",    # flake8-use-pathlib
+    "ERA",    # eradicate — commented-out code
+    "PL",     # pylint rules
+    "TRY",    # tryceratops — exception anti-patterns
+    "FLY",    # flynt — f-string conversion
+    "PERF",   # perflint — performance anti-patterns
+    "FURB",   # refurb — modern Python idioms
+    "RUF",    # ruff-specific rules
+]
+ignore = [
+    "ANN101",  # missing type annotation for self
+    "ANN102",  # missing type annotation for cls
+    "S101",    # assert used — fine in tests
+    "PLR0913", # too many arguments — sometimes necessary in hardware APIs
+    "TRY003",  # long exception messages — readability over dogma
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ANN", "S101", "PLR2004", "SLF001"]
+"examples/**/*.py" = ["ANN", "T20"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+
+# ── Mypy (strict type checking) ─────────────────────────────────────────────
+
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 strict = true
+warn_unreachable = true
+enable_error_code = ["ignore-without-code", "redundant-cast", "truthy-bool"]
+
+[[tool.mypy.overrides]]
+module = ["serial.*"]
+ignore_missing_imports = true
+
+# ── Pytest ───────────────────────────────────────────────────────────────────
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short --strict-markers"
+
+# ── Coverage ─────────────────────────────────────────────────────────────────
+
+[tool.coverage.run]
+source = ["insight_profiler"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80
