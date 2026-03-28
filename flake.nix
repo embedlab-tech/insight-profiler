@@ -12,7 +12,7 @@
   outputs = { self, nixpkgs, flake-utils, nixpkgs-esp-dev }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        # General nixpkgs for host tools
+        # General nixpkgs — Python, Node, host tools
         pkgs = import nixpkgs { inherit system; };
 
         # Separate nixpkgs instance for ESP-IDF — uses nixpkgs-esp-dev's own
@@ -21,36 +21,89 @@
           inherit system;
           overlays = [ nixpkgs-esp-dev.overlays.default ];
           config = {
-            # ecdsa is a dependency of esptool and is flagged for CVE-2024-23342
-            # (timing side-channel in ECDSA). Acceptable for local dev tooling.
+            # ecdsa is a dependency of esptool, flagged for CVE-2024-23342
+            # (timing side-channel). Acceptable for local dev tooling.
             permittedInsecurePackages = [ "python3.13-ecdsa-0.19.1" ];
           };
         };
+
+        # Shared host tools used across multiple shells
+        commonTools = with pkgs; [ git ];
+
+        # ESP-IDF shell inputs
+        firmwareInputs = [
+          esp-pkgs.esp-idf-full  # ESP-IDF v5.x, xtensa-esp32s3-elf toolchain
+          pkgs.cmake
+          pkgs.ninja
+        ] ++ commonTools;
+
+        # Python SDK shell inputs
+        pythonInputs = with pkgs; [
+          python312   # matches requires-python = ">=3.12" in pyproject.toml
+          uv          # fast package manager — replaces pip + venv
+          ruff        # linter + formatter (used in pyproject.toml)
+        ] ++ commonTools;
+
+        # JS SDK shell inputs
+        jsInputs = with pkgs; [
+          nodejs_22   # LTS, satisfies engines.node >= 20
+        ] ++ commonTools;
+
       in
       {
         devShells = {
+          # ESP32-S3 firmware — nix develop .#firmware
           firmware = pkgs.mkShell {
             name = "insight-profiler-firmware";
-
-            buildInputs = [
-              esp-pkgs.esp-idf-full   # ESP-IDF v5.x, all targets incl. ESP32-S3
-              pkgs.git
-              pkgs.cmake
-              pkgs.ninja
-            ];
-
+            buildInputs = firmwareInputs;
             shellHook = ''
-              echo "Insight Profiler — firmware dev environment"
-              echo "Target : ESP32-S3"
-              echo "IDF    : $IDF_PATH"
-              echo ""
-              echo "Build  : cd firmware && idf.py build"
-              echo "Flash  : cd firmware && idf.py -p /dev/cu.usbmodem* flash"
-              echo "Monitor: cd firmware && idf.py -p /dev/cu.usbmodem* monitor"
+              echo "Insight Profiler — firmware (ESP32-S3)"
+              echo "IDF: $IDF_PATH"
+              echo "Build:   cd firmware && idf.py build"
+              echo "Flash:   cd firmware && idf.py -p /dev/cu.usbmodem* flash monitor"
             '';
           };
 
-          default = self.devShells.${system}.firmware;
+          # Python SDK — nix develop .#python-sdk
+          python-sdk = pkgs.mkShell {
+            name = "insight-profiler-python-sdk";
+            buildInputs = pythonInputs;
+            shellHook = ''
+              echo "Insight Profiler — Python SDK"
+              echo "Python: $(python --version)"
+              echo "Setup:  cd sdk-python && uv sync"
+              echo "Test:   cd sdk-python && uv run pytest"
+              echo "Lint:   cd sdk-python && uv run ruff check ."
+            '';
+          };
+
+          # JS / TypeScript SDK — nix develop .#js-sdk
+          js-sdk = pkgs.mkShell {
+            name = "insight-profiler-js-sdk";
+            buildInputs = jsInputs;
+            shellHook = ''
+              echo "Insight Profiler — JS/TypeScript SDK"
+              echo "Node: $(node --version)"
+              echo "Setup: cd sdk-js && npm install"
+              echo "Build: cd sdk-js && npm run build"
+              echo "Test:  cd sdk-js && npm test"
+            '';
+          };
+
+          # All-in-one — nix develop (default)
+          default = pkgs.mkShell {
+            name = "insight-profiler";
+            buildInputs = firmwareInputs ++ pythonInputs ++ jsInputs;
+            shellHook = ''
+              echo "Insight Profiler — full dev environment"
+              echo ""
+              echo "  firmware   → cd firmware   && idf.py build"
+              echo "  python-sdk → cd sdk-python && uv sync && uv run pytest"
+              echo "  js-sdk     → cd sdk-js     && npm install && npm run build"
+              echo ""
+              echo "Or use focused shells: nix develop .#firmware / .#python-sdk / .#js-sdk"
+            '';
+          };
         };
       }
     );
